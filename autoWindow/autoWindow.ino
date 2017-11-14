@@ -1,6 +1,33 @@
 #include <DHT11.h>
 #include <Stepper.h>
+#include "SPI.h"
+#include "WiFi.h"
+
+#define SERVICE_KEY String("89b33429e954137534d5f996da975b2e")
+#define LOCATION   String("Asan")
+#define PORT      80
+
 #define MAXSIZE 5
+
+// WiFi 셋팅
+char SSID[] = "will_204";
+const char PASS[] = "16111711";
+const char URL[] = "api.openweathermap.org";
+
+WiFiClient client;
+
+int establish_state = 0;
+
+String currentLine = "";
+String tempLine = "";
+String dateLine = "";
+String season;
+
+boolean tempActive = false;
+boolean dateActive = false;
+
+int tempValue = 0;
+int monthValue = 0;
 
 // 모터 셋팅
 const int stepsPerRevolution = 200; // 모터의 1회전당 스텝 수에 맞게 조정   
@@ -32,17 +59,36 @@ int REF_3V3 = A1; //3.3V power on the Arduino board
 
 void setup()
 {
-  Serial.begin(9600);
+   Serial.begin(9600);
 
-  pinMode(UVOUT, INPUT);
-  pinMode(REF_3V3, INPUT);
-  pinMode(inputPin, INPUT); // 센서 Input 설정
-  pinMode(ledPower, OUTPUT);
+   // WiFi setup
+   Serial.println("Attempting to connect to WPA network...");
+   Serial.print("SSID: ");
+   Serial.println(SSID);
 
-  // 모터 스피드 설정
-  myStepper.setSpeed(120);
+   Serial.print("Connecting to WiFi... ");
+   
+   if (WiFi.begin(SSID, PASS) != WL_CONNECTED)
+   {
+      Serial.println("Error.");
+      while (true); /*DONT DO ANYTHING ELSE*/
+   }
 
-  Serial.println("uv센서 예제");
+   Serial.println("Complete.");
+   
+   setup_client();
+   get_from_client();
+
+   // 센서 setup
+   pinMode(UVOUT, INPUT);
+   pinMode(REF_3V3, INPUT);
+   pinMode(inputPin, INPUT); // 센서 Input 설정
+   pinMode(ledPower, OUTPUT);
+
+   // 모터 스피드 설정
+   myStepper.setSpeed(120);
+
+   Serial.println("uv센서 예제");
 }
 
 void loop()
@@ -56,7 +102,93 @@ void loop()
   float outputVoltage = 3.3 / refLevel * uvLevel;
 
   float uvIntensity = mapfloat(outputVoltage, 0.99, 2.8, 0.0, 15.0); //Convert the voltage to a UV intensity level
+   // WiFi로 OpenWeatherMap에서 날씨정보를 불러옴
+   if (establish_state == 1) 
+   {
+      while (client.available())
+      {
+         char c = client.read();
+         //Serial.print(c);
 
+         currentLine += c;
+
+         if (currentLine.endsWith("<temperature value="))
+         {
+            tempActive = true;
+         }
+         else if(currentLine.endsWith("<lastupdate value="))
+         {
+            dateActive = true;
+         }
+         
+         if (tempActive)
+         {
+            if(c != 'm')
+            {
+               tempLine += c;
+            }
+            else
+            {
+               tempActive = false;
+                
+               tempValue = string_to_int(tempLine) - 273;  // 절대온도 계산
+               Serial.println();
+               Serial.print("tempActive : ");
+               Serial.print(tempValue);
+               Serial.println("°C");
+            }
+         }
+         else if(dateActive)
+         {
+            if(c != 'T')
+            {
+                dateLine += c;
+            } 
+            else
+            {
+                dateActive = false;
+                
+                monthValue = month_substring(dateLine);
+                Serial.println();
+                Serial.print("dayActive : ");
+                Serial.println(monthValue);
+
+                if(monthValue >= 4 && monthValue <= 9)
+                {
+                   season = "Summer";
+                }
+                else
+                {
+                   season = "Winter";  
+                }
+
+                Serial.println(season);
+            }
+         }
+      }
+
+      if (!client.connected() &&
+         !client.available())
+      {
+         Serial.println();
+         client.stop();
+         establish_state = 0;
+         Serial.println("Disconnected.");         
+
+         delay(10000);
+
+         Serial.println("");
+         
+         // 메모리에 데이터 리셋
+         currentLine = "";
+         tempLine = "";
+         dateLine = "";
+         
+         setup_client();
+         get_from_client();
+      }
+   }
+  
   if((err=dht11.read(humi, temp))==0) //온도, 습도 읽어와서 표시
   {
     Serial.print("온도:");
@@ -165,7 +297,7 @@ void loop()
       activationFunc = 2;   
     }
     // 온도
-    else if(temp <= 20)
+    else if(temp <= tempValue)
     {
       Serial.println("온도가 낮아 창문을 닫습니다.");
       for (int x = 0; x < 19; ++x)
@@ -218,7 +350,7 @@ void loop()
       activationFunc = -1;
     }
     // 온도
-    else if(activationFunc == 3 && temp >= 24)
+    else if(activationFunc == 3 && temp >= tempValue)
     {
       Serial.println("온도가 높아 창문을 엽니다.");
       for (int x = 0; x < 19; ++x)
@@ -248,10 +380,76 @@ void loop()
       curtainCheck = false;  
     }
   }
-  
-  
-
   delay(1000);
+}
+
+
+void setup_client()
+{
+   Serial.println("Starting to connect...");
+   Serial.print("Connecting URL: ");
+   Serial.println(URL);
+
+   if (!client.connect(URL, PORT))
+   {
+      Serial.println("Error.");
+      while (true);
+   }
+
+   Serial.println("Complete.");
+}
+
+void get_from_client()
+{
+   client.println("GET /data/2.5/weather?q=" + LOCATION + "&appid=" + SERVICE_KEY + "&mode=xml");
+   client.print("HOST: api.openweathermap.org\n");
+   client.println("User-Agent: launchpad-wifi");
+   client.println("Connection: close");
+   client.println();
+
+   Serial.println();
+   Serial.println("Weather information for " + LOCATION);
+   
+   establish_state = 1;
+}
+
+int month_substring(String input)
+{
+   char tmpMonth[3];
+   int result;
+   
+   input = input.substring(7, 9);
+   Serial.println();
+   Serial.println(input);
+
+   input.toCharArray(tmpMonth, sizeof(tmpMonth));
+   
+
+   result = atoi(tmpMonth);
+
+   Serial.println();
+   Serial.println(result);
+   
+   return result;
+}
+
+int string_to_int(String input)
+{
+   int i = 2;         // =" 두개를 제외하고 시작
+   char changeVal[20];
+   int result;
+
+   while(input[i] != '"')
+   {
+      i++;
+   }
+
+   input = input.substring(2, i);
+
+   input.toCharArray(changeVal, sizeof(changeVal));
+
+   result = atoi(changeVal);
+   return result;
 }
 
 //Takes an average of readings on a given pin
