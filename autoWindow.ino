@@ -2,6 +2,8 @@
 #include <Stepper.h>
 #define MAXSIZE 5
 
+String season;
+
 // 모터 셋팅
 const int stepsPerRevolution = 200; // 모터의 1회전당 스텝 수에 맞게 조정   
 Stepper myStepper(stepsPerRevolution, 11,9,10,8); // Note 8 & 11 swapped
@@ -128,110 +130,223 @@ void loop()
 
   Serial.print(dustDensity * 1000);
   Serial.println(" ug/m3 ");
-  
-  // 창문이 열려있을 때
-  if(windowCheck == false && activationFunc == -1)
-  {
-    // 빗물
-    if(rainValue < 100)
-    {
-      Serial.println("비가 내려서 창문을 닫습니다.");
-      for (int x = 0; x < 19; ++x)
-      {
-        myStepper.step(stepsPerRevolution);
-      }
-      
-      windowCheck = true;
-      activationFunc = 0;
-    }
-    // 습도
-    else if(humi <= 22)
-    {
-      Serial.println("내부 습도가 낮아져 창문을 닫습니다.");
-      for (int x = 0; x < 19; ++x)
-      {
-        myStepper.step(stepsPerRevolution);
-      }
 
-      windowCheck = true;
-      activationFunc = 1;
-    }
-    // 먼지
-    else if(dustDensity * 1000 >= 80)
+  // 겨울일 때 /*기준 설정하자!*/
+  if(season == "winter")
+  {
+    // 창문이 열려있을 때
+    if(windowCheck == false && activationFunc == -1)
     {
-      Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
-      for (int x = 0; x < 19; ++x)
+      // 빗물
+      if(rainValue < 100)
       {
-        myStepper.step(stepsPerRevolution);
+        Serial.println("비가 내려서 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 0;
       }
-      
-      windowCheck = true;
-      activationFunc = 2;   
+      // 습도
+      else if(humi <= 22)
+      {
+        Serial.println("내부 습도가 낮아져 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+  
+        windowCheck = true;
+        activationFunc = 1;
+      }
+      // 먼지
+      else if(dustDensity * 1000 >= 80)
+      {
+        Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 2;   
+      }
+      // 온도
+      else if(temp <= 20)
+      {
+        Serial.println("온도가 낮아 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 3;
+      }
     }
-    // 온도
-    else if(temp <= 20)
+    // 창문이 열려있을 때
+    else if (windowCheck == true)
     {
-      Serial.println("온도가 낮아 창문을 닫습니다.");
-      for (int x = 0; x < 19; ++x)
+      // 빗물
+      if(activationFunc == 0 && rainValue >= 300)
       {
-        myStepper.step(stepsPerRevolution);
+        Serial.println("비가 그쳐서 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
       }
-      
-      windowCheck = true;
-      activationFunc = 3;
+      // 습도
+      else if(activationFunc == 1 && humi >= 27)
+      {
+        Serial.println("내부 습도가 높아져 창문을 엽니다.");
+  
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
+      }
+      //먼지
+      else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
+      {
+        Serial.println("미세먼지가 적어져 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
+      }
+      // 온도
+      else if(activationFunc == 3 && temp >= 24)
+      {
+        Serial.println("온도가 높아 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
+      }
     }
   }
-  // 창문이 열려있을 때
-  else if (windowCheck == true)
+  // 여름일 때 /*기준 설정하자!*/
+  else if(season == "Summer")
   {
-    // 빗물
-    if(activationFunc == 0 && rainValue >= 300)
+      // 창문이 열려있을 때
+    if(windowCheck == false && activationFunc == -1)
     {
-      Serial.println("비가 그쳐서 창문을 엽니다.");
-      for (int x = 0; x < 19; ++x)
+      // 빗물
+      if(rainValue < 100)
       {
-        myStepper.step(-stepsPerRevolution);
+        Serial.println("비가 내려서 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 0;
       }
-      
-      windowCheck = false;
-      activationFunc = -1;
+      // 습도
+      else if(humi <= 22)
+      {
+        Serial.println("내부 습도가 낮아져 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+  
+        windowCheck = true;
+        activationFunc = 1;
+      }
+      // 먼지
+      else if(dustDensity * 1000 >= 80)
+      {
+        Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 2;   
+      }
+      // 온도
+      else if(temp <= 20)
+      {
+        Serial.println("온도가 낮아 창문을 닫습니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);
+        }
+        
+        windowCheck = true;
+        activationFunc = 3;
+      }
     }
-    // 습도
-    else if(activationFunc == 1 && humi >= 27)
+    // 창문이 열려있을 때
+    else if (windowCheck == true)
     {
-      Serial.println("내부 습도가 높아져 창문을 엽니다.");
-
-      for (int x = 0; x < 19; ++x)
+      // 빗물
+      if(activationFunc == 0 && rainValue >= 300)
       {
-        myStepper.step(-stepsPerRevolution);
+        Serial.println("비가 그쳐서 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
       }
-      
-      windowCheck = false;
-      activationFunc = -1;
-    }
-    //먼지
-    else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
-    {
-      Serial.println("미세먼지가 적어져 창문을 엽니다.");
-      for (int x = 0; x < 19; ++x)
+      // 습도
+      else if(activationFunc == 1 && humi >= 27)
       {
-        myStepper.step(-stepsPerRevolution);
+        Serial.println("내부 습도가 높아져 창문을 엽니다.");
+  
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
       }
-      
-      windowCheck = false;
-      activationFunc = -1;
-    }
-    // 온도
-    else if(activationFunc == 3 && temp >= 24)
-    {
-      Serial.println("온도가 높아 창문을 엽니다.");
-      for (int x = 0; x < 19; ++x)
+      //먼지
+      else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
       {
-        myStepper.step(-stepsPerRevolution);
+        Serial.println("미세먼지가 적어져 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
       }
-      
-      windowCheck = false;
-      activationFunc = -1;
+      // 온도
+      else if(activationFunc == 3 && temp >= 24)
+      {
+        Serial.println("온도가 높아 창문을 엽니다.");
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+        
+        windowCheck = false;
+        activationFunc = -1;
+      }
     }
   }
 
