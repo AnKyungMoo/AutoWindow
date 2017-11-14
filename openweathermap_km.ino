@@ -16,6 +16,7 @@ int establish_state = 0;
 String currentLine = "";
 String tempLine = "";
 String dateLine = "";
+String season;
 
 boolean tempActive = false;
 boolean dateActive = false;
@@ -95,6 +96,17 @@ void loop()
                 Serial.println();
                 Serial.print("dayActive : ");
                 Serial.println(monthValue);
+
+                if(monthValue >= 4 && monthValue <= 9)
+                {
+                   season = "Summer";
+                }
+                else
+                {
+                   season = "Winter";  
+                }
+
+                Serial.println(season);
             }
          }
       }
