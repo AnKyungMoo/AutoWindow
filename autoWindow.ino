@@ -113,6 +113,10 @@ void loop()
   calcVoltage = voMeasured * (5.0 / 1024.0);
 
   dustDensity = 0.17 * calcVoltage - 0.1;
+  if(dustDensity * 1000 <= 0)
+  {
+     dustDensity = 0;
+  }
 
   Serial.print("Raw Signal Value (0-1023): ");
   Serial.print(voMeasured);
@@ -153,9 +157,9 @@ void loop()
       activationFunc = 1;
     }
     // 먼지
-    else if(dustDensity * 1000 >= 30)
+    else if(dustDensity * 1000 >= 80)
     {
-      Serial.println("미세먼지가 많아 창문을 닫습니다.");
+      Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
       for (int x = 0; x < 19; ++x)
       {
         myStepper.step(stepsPerRevolution);
@@ -206,7 +210,7 @@ void loop()
       activationFunc = -1;
     }
     //먼지
-    else if(activationFunc == 2 && dustDensity * 1000 <= -20)
+    else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
     {
       Serial.println("미세먼지가 적어져 창문을 엽니다.");
       for (int x = 0; x < 19; ++x)
