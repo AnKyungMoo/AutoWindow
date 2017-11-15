@@ -18,12 +18,12 @@ const int stepsPerRevolution = 200; // 모터의 1회전당 스텝 수에 맞게
 Stepper myStepper(stepsPerRevolution, 11,9,10,8); // Note 8 & 11 swapped
 
 int pin=3;
-DHT11 dht11(pin);
-int inputPin = 4; // 센서 시그널핀
-int pirState = LOW; // PIR 초기상태
-int motionValue = 0;          // 모션 Signal 입력값
-int measurePin = 2;   //A2
-int ledPower = 5;     //핀번호 5
+DHT11 dht11(pin);      // 온습도
+int motion_input = 4;   // 모션 센서 시그널핀
+int pirState = LOW;     // PIR 초기상태
+int motionValue = 0;    // 모션 Signal 입력값
+int measurePin = 2;     //A2
+int ledPower = 5;       //핀번호 5
 
 int samplingTime = 280;
 int deltaTime = 40;
@@ -45,11 +45,11 @@ void setup()
 {
   Serial.begin(9600);
 
-  pinMode(BTN_PIN, INPUT);  // 모드 전환 버튼 input 설정
-  pinMode(UVOUT, INPUT);    // 자외선 핀 설정
+  pinMode(BTN_PIN, INPUT);      // 모드 전환 버튼 input 설정
+  pinMode(UVOUT, INPUT);        // 자외선 핀 설정
   pinMode(REF_3V3, INPUT);  
-  pinMode(inputPin, INPUT); // 센서 Input 설정
-  pinMode(ledPower, OUTPUT);
+  pinMode(motion_input, INPUT); // 모션 센서 Input 설정
+  pinMode(ledPower, OUTPUT);    // 미세먼지 아웃풋
 
   // 모터 스피드 설정
   myStepper.setSpeed(120);
@@ -138,7 +138,8 @@ void loop()
   calcVoltage = voMeasured * (5.0 / 1024.0);
 
   dustDensity = 0.17 * calcVoltage - 0.1;
-  if(dustDensity * 1000 <= 0)
+  
+  if(dustDensity * 1000 <= 0)   // 음수 값 필터링(0으로 처리)
   {
      dustDensity = 0;
   }
@@ -377,7 +378,7 @@ void loop()
   }
   else    // 수동 모드
   {
-    curr_motion = digitalRead(inputPin); // 센서값 읽기
+    curr_motion = digitalRead(motion_input); // 센서값 읽기
 
     if (prev_motion == LOW && curr_motion == HIGH)
     {
