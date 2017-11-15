@@ -3,7 +3,7 @@
 #include "SPI.h"
 #include "WiFi.h"
 #define MAXSIZE 5
-#define BTN_PIN 6
+#define BTN_PIN 12
 #define SERVICE_KEY String("89b33429e954137534d5f996da975b2e")
 #define LOCATION   String("Asan")
 #define PORT      80
@@ -29,7 +29,7 @@ int tempValue = 0;
 int monthValue = 0;
 
 // 수동_자동모드 셋팅
-int mode_state = 0;
+int mode_state = 1;
 int prevbtn = -1;
 int currbtn = -1;
 int motion_state = 0;
@@ -121,6 +121,12 @@ void loop()
     else
     {
       mode_state = 0;
+
+      if(!windowCheck) // false이면 열려있는거
+      {
+        activationFunc = -1;
+      }
+      
       Serial.println("자동모드로 변환");
     }
   }
@@ -204,7 +210,7 @@ void loop()
          establish_state = 0;
          Serial.println("Disconnected.");         
 
-         delay(10000);
+         delay(100);
 
          Serial.println("");
          
@@ -318,9 +324,9 @@ void loop()
         }
         */
         // 먼지
-        else if(dustDensity * 1000 >= 80)
+        else if(dustDensity * 1000 < 80)
         {
-          Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
+          Serial.println("집안에 미세먼지 수치가 작아 창문을 닫습니다.(환기하지 않음)");   // 미세먼지 나쁜 기준
           for (int x = 0; x < 19; ++x)
           {
             myStepper.step(stepsPerRevolution);
@@ -342,7 +348,7 @@ void loop()
           activationFunc = 3;
         }
       }
-      // 창문이 열려있을 때
+      // 창문이 닫혀있을 때
       else if (windowCheck == true)
       {
         // 빗물
@@ -373,9 +379,9 @@ void loop()
         }
         */
         //먼지
-        else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
+        else if(activationFunc == 2 && dustDensity * 1000 >= 30)  // 미세 먼지 좋은 기준
         {
-          Serial.println("미세먼지가 적어져 창문을 엽니다.");
+          Serial.println("집안에 미세먼지 수치가 높아져 창문을 엽니다.(환기한다.)");
           for (int x = 0; x < 19; ++x)
           {
             myStepper.step(-stepsPerRevolution);
@@ -431,9 +437,9 @@ void loop()
         }
         */
         // 먼지
-        else if(dustDensity * 1000 >= 80)
+        else if(dustDensity * 1000 < 80) // 미세먼지 나쁜 기준
         {
-          Serial.println("미세먼지가 많아 창문을 닫습니다.");   // 미세먼지 나쁜 기준
+          Serial.println("집안에 미세먼지 수치가 작아 창문을 닫습니다.(환기하지 않음)");   
           for (int x = 0; x < 19; ++x)
           {
             myStepper.step(stepsPerRevolution);
@@ -455,7 +461,7 @@ void loop()
           activationFunc = 3;
         }
       }
-      // 창문이 열려있을 때
+      // 창문이 닫혀있을 때
       else if (windowCheck == true)
       {
         // 빗물
@@ -486,9 +492,9 @@ void loop()
         }
         */
         //먼지
-        else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
+        else if(activationFunc == 2 && dustDensity * 1000 >= 30)  // 미세 먼지 좋은 기준
         {
-          Serial.println("미세먼지가 적어져 창문을 엽니다.");
+          Serial.println("집안에 미세먼지 수치가 높아져 창문을 엽니다.(환기한다.)");
           for (int x = 0; x < 19; ++x)
           {
             myStepper.step(-stepsPerRevolution);
@@ -516,16 +522,20 @@ void loop()
   {
     curr_motion = digitalRead(motion_input); // 센서값 읽기
 
-    if (prev_motion == LOW && curr_motion == HIGH)
+    //Serial.println("Debug1");
+    //Serial.println(curr_motion);
+
+    if (curr_motion == HIGH)
     {
-       if (motion_state == 0)         // 창문이 닫혀있을 때
+       //Serial.println("Debug2");
+       if (windowCheck)         // 창문이 닫혀있을 때
        {
           for (int x = 0; x < 19; ++x)
           {
             myStepper.step(-stepsPerRevolution);  // 연다
           }
 
-          motion_state = 1;
+          windowCheck = false;
        }
        else                           // 창문이 열려있을 때
        {
@@ -534,7 +544,7 @@ void loop()
             myStepper.step(stepsPerRevolution);  // 닫는다
           }
 
-          motion_state = 0;
+          windowCheck = true;
        }
     }
     
