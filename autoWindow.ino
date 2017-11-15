@@ -176,6 +176,7 @@ void loop()
           activationFunc = 0;
         }
         // 습도
+        /*
         else if(humi <= 22)
         {
           Serial.println("내부 습도가 낮아져 창문을 닫습니다.");
@@ -187,6 +188,7 @@ void loop()
           windowCheck = true;
           activationFunc = 1;
         }
+        */
         // 먼지
         else if(dustDensity * 1000 >= 80)
         {
@@ -228,6 +230,7 @@ void loop()
           activationFunc = -1;
         }
         // 습도
+        /*
         else if(activationFunc == 1 && humi >= 27)
         {
           Serial.println("내부 습도가 높아져 창문을 엽니다.");
@@ -240,6 +243,7 @@ void loop()
           windowCheck = false;
           activationFunc = -1;
         }
+        */
         //먼지
         else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
         {
@@ -285,6 +289,7 @@ void loop()
           activationFunc = 0;
         }
         // 습도
+        /*
         else if(humi <= 22)
         {
           Serial.println("내부 습도가 낮아져 창문을 닫습니다.");
@@ -296,6 +301,7 @@ void loop()
           windowCheck = true;
           activationFunc = 1;
         }
+        */
         // 먼지
         else if(dustDensity * 1000 >= 80)
         {
@@ -337,6 +343,7 @@ void loop()
           activationFunc = -1;
         }
         // 습도
+        /*
         else if(activationFunc == 1 && humi >= 27)
         {
           Serial.println("내부 습도가 높아져 창문을 엽니다.");
@@ -349,6 +356,7 @@ void loop()
           windowCheck = false;
           activationFunc = -1;
         }
+        */
         //먼지
         else if(activationFunc == 2 && dustDensity * 1000 <= 30)  // 미세 먼지 좋은 기준
         {
