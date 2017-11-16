@@ -1,5 +1,6 @@
 #include <DHT11.h>
 #include <Stepper.h>
+#include <LiquidCrystal.h>
 #include "SPI.h"
 #include "WiFi.h"
 #define MAXSIZE 5
@@ -27,6 +28,9 @@ boolean dateActive = false;
 
 int tempValue = 0;
 int monthValue = 0;
+
+// LCD 핀 셋팅
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 // 수동_자동모드 셋팅
 int mode_state = 1;
@@ -67,6 +71,8 @@ int REF_3V3 = A1;           // 빗물 3.3V power on the Arduino board
 void setup()
 {
   Serial.begin(9600);
+
+  lcd.begin(16, 2); // LCD 16 x 2 사용
 
   // WiFi setup
    Serial.println("Attempting to connect to WPA network...");
@@ -291,6 +297,31 @@ void loop()
   
     Serial.print(dustDensity * 1000);
     Serial.println(" ug/m3 ");
+
+    // LCD Display
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: ");
+    lcd.setCursor(6, 0);
+    lcd.print(temp);
+    lcd.setCursor(0, 1);
+    lcd.print("rainValue: ");
+    
+    if(rainValue >= 300)
+    {
+      lcd.setCursor(11, 1);
+      lcd.print("Rain!");
+    }
+    else
+    {
+      lcd.clear();
+
+      lcd.setCursor(0, 0);
+      lcd.print("Temp: ");
+      lcd.setCursor(6, 0);
+      lcd.print(temp);
+      lcd.setCursor(0, 1);
+      lcd.print("rainValue: ");
+    }
     
     if(season == "Winter")
     {
