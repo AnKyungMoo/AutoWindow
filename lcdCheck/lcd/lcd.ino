@@ -1,6 +1,6 @@
 #include <LiquidCrystal.h>
  
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal lcd(19, 20, 15, 16, 17, 18);
 
 int rainValue = 240;
 
