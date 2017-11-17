@@ -517,9 +517,28 @@ void loop()
           if(activationFunc == 0 && rainValue >= 300)
           {
             Serial.println("비가 그쳐서 창문을 엽니다.");
-            for (int x = 0; x < 19; ++x)
+
+            if(curtainCheck == true)
             {
-              myStepper.step(-stepsPerRevolution);
+              Serial.println("커튼도 같이 올립니다.");
+              for (int x = 0; x < 19; ++x)
+              {
+                myStepper.step(-stepsPerRevolution);
+                curtainStepper.step(stepsPerRevolution);
+              }
+              for (int x = 0; x < 7; ++x)
+              {
+                curtainStepper.step(stepsPerRevolution);  
+              }
+
+              curtainCheck = false;
+            }
+            else
+            {
+              for (int x = 0; x < 19; ++x)
+              {
+                myStepper.step(-stepsPerRevolution);
+              }
             }
             
             windowCheck = false;
@@ -630,9 +649,27 @@ void loop()
           if(activationFunc == 0 && rainValue >= 300)
           {
             Serial.println("비가 그쳐서 창문을 엽니다.");
-            for (int x = 0; x < 19; ++x)
+            if(curtainCheck == true)
             {
-              myStepper.step(-stepsPerRevolution);
+              Serial.println("커튼도 같이 올립니다.");
+              for (int x = 0; x < 19; ++x)
+              {
+                myStepper.step(-stepsPerRevolution);
+                curtainStepper.step(stepsPerRevolution);
+              }
+              for (int x = 0; x < 7; ++x)
+              {
+                curtainStepper.step(stepsPerRevolution);  
+              }
+
+              curtainCheck = false;
+            }
+            else
+            {
+              for (int x = 0; x < 19; ++x)
+              {
+                myStepper.step(-stepsPerRevolution);
+              }
             }
             
             windowCheck = false;
