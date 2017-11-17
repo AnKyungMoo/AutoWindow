@@ -11,10 +11,12 @@
 #define LOCATION   String("Asan")
 #define PORT      80
 
-// EEPROM 셋팅
+// 전원 셋팅
 int power_state = 1;  // 0이면 꺼짐, 1이면 켜짐
 int prevPower = -1;
 int currPower = -1;
+boolean window_controller = false;
+boolean curtain_controller = false;
 
 // WiFi 셋팅
 char SSID[] = "m620_24g";
@@ -67,7 +69,6 @@ int sleepTime = 9680;
 float voMeasured = 0;
 float calcVoltage = 0;
 float dustDensity = 0;
-bool windowFunction[MAXSIZE] = {false, };     // 각 기능별 bool 체크
 int activationFunc = -1;
 bool windowCheck = false;   // 창문 열닫
 bool curtainCheck = false;  // 커튼 열닫
@@ -88,6 +89,32 @@ void setup()
   windowCheck = EEPROM.read(1);
   activationFunc = EEPROM.read(2);
   curtainCheck = EEPROM.read(3);
+  //window_controller = EEPROM.read(4);
+  //curtain_controller = EEPROM.read(5);
+
+  if (window_controller == true)
+  {
+    Serial.println("이전 환경과 맞추기 위하여 닫혀있던 창문을 엽니다.");
+    
+    for (int x = 0; x < 19; ++x)
+    {
+      myStepper.step(-stepsPerRevolution);
+    }
+
+    window_controller = false;
+  }
+
+  if (curtain_controller == true)
+  {
+    Serial.println("이전 환경과 맞추기 위하여 내려가 있던 커튼을 올립니다.");
+    
+    for (int x = 0; x < 26; ++x)
+    {
+      curtainStepper.step(stepsPerRevolution);  
+    }
+
+    curtain_controller = false;
+  }
 
   Serial.println(windowCheck);
   
@@ -131,17 +158,64 @@ void loop()
     if(power_state == 0)
     {
       power_state = 1;
-      Serial.println("켠다.");  
+      Serial.println("켠다.");
+
+      if (window_controller == true)
+      {
+        Serial.println("이전 환경과 맞추기 위하여 닫혀있던 창문을 엽니다.");
+        
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(-stepsPerRevolution);
+        }
+    
+        window_controller = false;
+      }
+    
+      if (curtain_controller == true)
+      {
+        Serial.println("이전 환경과 맞추기 위하여 내려가 있던 커튼을 올립니다.");
+        
+        for (int x = 0; x < 26; ++x)
+        {
+          curtainStepper.step(stepsPerRevolution);  
+        }
+    
+        curtain_controller = false;
+      }
     }
     else
     {
       power_state = 0;
       lcd.clear();
 
+      if(windowCheck == false)
+      {
+        for (int x = 0; x < 19; ++x)
+        {
+          myStepper.step(stepsPerRevolution);       // 창문을 닫는다
+          
+          window_controller = true;
+        }
+      }
+
+      if(curtainCheck == false)
+      {
+        for (int x = 0; x < 24; ++x)
+        {
+          curtainStepper.step(-stepsPerRevolution); // 커텐을 내린다.
+          
+          curtain_controller = true;
+        }
+      }
+      
+      
       EEPROM.write(0, mode_state);
       EEPROM.write(1, windowCheck);
       EEPROM.write(2, activationFunc);
       EEPROM.write(3, curtainCheck);
+      EEPROM.write(4, window_controller);
+      EEPROM.write(5, curtain_controller);
 
       Serial.println("끈다.");
     }
