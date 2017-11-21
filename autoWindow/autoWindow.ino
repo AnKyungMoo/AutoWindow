@@ -19,8 +19,8 @@ boolean window_controller = false;
 boolean curtain_controller = false;
 
 // WiFi 셋팅
-char SSID[] = "m620_24g";
-const char PASS[] = "digitallogic";
+char SSID[] = "ESL";
+const char PASS[] = "dlaqpelemm608";
 const char URL[] = "api.openweathermap.org";
 
 WiFiClient client;
@@ -89,35 +89,8 @@ void setup()
   windowCheck = EEPROM.read(1);
   activationFunc = EEPROM.read(2);
   curtainCheck = EEPROM.read(3);
-  //window_controller = EEPROM.read(4);
-  //curtain_controller = EEPROM.read(5);
-
-  if (window_controller == true)
-  {
-    Serial.println("이전 환경과 맞추기 위하여 닫혀있던 창문을 엽니다.");
-    
-    for (int x = 0; x < 19; ++x)
-    {
-      myStepper.step(-stepsPerRevolution);
-    }
-
-    window_controller = false;
-  }
-
-  if (curtain_controller == true)
-  {
-    Serial.println("이전 환경과 맞추기 위하여 내려가 있던 커튼을 올립니다.");
-    
-    for (int x = 0; x < 26; ++x)
-    {
-      curtainStepper.step(stepsPerRevolution);  
-    }
-
-    curtain_controller = false;
-  }
-
-  Serial.println(windowCheck);
-  
+  window_controller = EEPROM.read(4);
+  curtain_controller = EEPROM.read(5);
 
   // WiFi setup
    Serial.println("Attempting to connect to WPA network...");
@@ -147,6 +120,30 @@ void setup()
   // 모터 스피드 설정
   myStepper.setSpeed(120);
   curtainStepper.setSpeed(120);
+
+  if (window_controller)
+  {
+    Serial.println("이전 환경과 맞추기 위하여 닫혀있던 창문을 엽니다.");
+    
+    for (int x = 0; x < 19; ++x)
+    {
+      myStepper.step(-stepsPerRevolution);
+    }
+
+    window_controller = false;
+  }
+
+  if (curtain_controller)
+  {
+    Serial.println("이전 환경과 맞추기 위하여 내려가 있던 커튼을 올립니다.");
+    
+    for (int x = 0; x < 26; ++x)
+    {
+      curtainStepper.step(stepsPerRevolution);  
+    }
+
+    curtain_controller = false;
+  }
 }
 
 void loop()
